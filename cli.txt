@@ -17,3 +17,6 @@ npm i --save-dev @types/passport-jwt
 
 npm i speakeasy
 npm i -D @types/speakeasy
+
+
+npm install --save @nestjs/passport passport
