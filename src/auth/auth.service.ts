@@ -12,6 +12,7 @@ import { SignInDto } from './dto/siginin.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ResetPasswordDto } from './dto/resetpassword.dto';
 import { ResetPasswordConfirmationDto } from './dto/resetpasswordconfirmation.dto';
+import { DeleteAccountDto } from './dto/deleteaccount.dto';
 
 @Injectable()
 export class AuthService {
@@ -106,5 +107,24 @@ export class AuthService {
     });
     // Reponse
     return { message: 'Password updated successfully' };
+  }
+
+  async deleteAccount(id: any, deleteaccountdto: DeleteAccountDto){
+    // Vérifier si utilisateur existe
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+    if (!user) throw new ConflictException('User not found');
+
+    // Vérifier si mot de passe correspond
+    const match = await bcrypt.compare(deleteaccountdto.password, user.password);
+    if (!match) throw new UnauthorizedException('Invalid credentials');
+
+    // Supprimer utilisateur
+    await this.prismaService.user.delete({
+      where: { id },
+    });
+    // Reponse
+    return { message: 'Account deleted successfully' };
   }
 }
