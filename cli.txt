@@ -1,0 +1,13 @@
+npm i prisma
+
+npx prisma miragte dev
+npx prisma init
+
+npm i bcrypt
+
+class-validator class-transformer
+@types/class-transformer
+
+npm i -D @types/nodemailer
+
+mail hog
