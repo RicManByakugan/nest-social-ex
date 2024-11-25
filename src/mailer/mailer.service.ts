@@ -18,11 +18,27 @@ export class MailerService {
   }
 
   async sendSignUpConfirmation(userEmail: string) {
+    const body = '<h1>Account created</h1>';
+    const subject = 'Welcome';
+    this.sendMailFunction(subject, body, userEmail);
+  }
+
+  async sendResetPassword(email: string, url: string, code: string) {
+    const body = `
+      <a href='${url}'>Reset pass</a>
+      <p>Code: ${code}</p>
+      <p>Code will expire in 15min</p>
+    `;
+    const subject = 'Reset Password';
+    this.sendMailFunction(subject, body, email);
+  }
+
+  async sendMailFunction(subject: string, body: string, userEmail: string) {
     (await this.transporter()).sendMail({
       from: 'app@noreply.com',
       to: userEmail,
-      subject: 'Welcome',
-      html: '<h1>Account created</h1>',
+      subject: subject,
+      html: body,
     });
   }
 }

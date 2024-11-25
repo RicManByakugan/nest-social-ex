@@ -14,3 +14,6 @@ mail hog
 
 npm i --save @nestjs/jwt passport-jwt
 npm i --save-dev @types/passport-jwt
+
+npm i speakeasy
+npm i -D @types/speakeasy

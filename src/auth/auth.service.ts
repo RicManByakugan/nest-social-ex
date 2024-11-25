@@ -6,9 +6,12 @@ import {
 import { SignUpDto } from './dto/signup.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import * as speakeasy from 'speakeasy';
 import { MailerService } from 'src/mailer/mailer.service';
 import { SignInDto } from './dto/siginin.dto';
 import { JwtService } from '@nestjs/jwt';
+import { ResetPasswordDto } from './dto/resetpassword.dto';
+import { ResetPasswordConfirmationDto } from './dto/resetpasswordconfirmation.dto';
 
 @Injectable()
 export class AuthService {
@@ -55,5 +58,53 @@ export class AuthService {
     });
     // Reponse
     return { token, user };
+  }
+
+  async resetPassword(email: ResetPasswordDto) {
+    // Vérifier si utilisateur existe
+    const user = await this.prismaService.user.findUnique({
+      where: { email: email.email },
+    });
+    if (!user) throw new ConflictException('User not found');
+    // Generate code
+    const code = speakeasy.totp({
+      secret: process.env.TOTP_SECRET,
+      digits:  5,
+      step: 60 * 15,
+      encoding: 'base32',
+    })
+    // Reponse
+    const url = "http://localhost:3000/auth/code-validation";
+
+    //Email
+    await this.mailerService.sendResetPassword(email.email, url, code);
+    return { message: 'Code sent' };
+  }
+
+  async resetPasswordConfirmation(data: ResetPasswordConfirmationDto){
+    const { code, password, email } = data;
+    // Vérifier si utilisateur existe
+    const user = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+    if (!user) throw new ConflictException('User not found');
+    // Vérifier si code est correct
+    const match = speakeasy.totp.verify({
+      secret: process.env.TOTP_SECRET,
+      token: code,
+      digits: 5,
+      step: 60 * 15,
+      encoding: 'base32',
+    })
+    if (!match) throw new UnauthorizedException('Invalid/expired code');
+    // Hasher mot de passe
+    const hash = await bcrypt.hash(password, 10);
+    // Mettre à jour mot de passe
+    await this.prismaService.user.update({
+      where: { email },
+      data: { password: hash },
+    });
+    // Reponse
+    return { message: 'Password updated successfully' };
   }
 }
